@@ -1,0 +1,11 @@
+.direnv/
+.mypy/
+.ipynb_checkpoints/
+*.ipynb
+*.zip
+*.pkl
+wandb/
+logs/
+runs/
+hub/
+__pycache__/
