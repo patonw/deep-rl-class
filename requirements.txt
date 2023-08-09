@@ -1,0 +1,10 @@
+gym
+gymnasium[box2d,atari,accept-rom-license]
+shimmy[gym-v26]
+optuna
+wandb
+#git+https://github.com/DLR-RM/rl-baselines3-zoo@update/hf
+git+https://github.com/huggingface/huggingface_sb3@gymnasium
+#stable_baselines3==2.0.0
+sb3-contrib
+xeus-python
