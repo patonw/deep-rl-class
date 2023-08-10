@@ -13,7 +13,6 @@ from torch.distributions import Categorical
 
 # Gym
 import gym
-import gym_pygame
 
 # Hugging Face Hub
 from huggingface_hub import notebook_login # To log to our Hugging Face account to be able to upload models to the Hub.
@@ -53,7 +52,7 @@ def evaluate_agent(env, max_steps, n_eval_episodes, policy, *, reset_info=False)
     total_rewards_ep = 0
     
     for step in range(max_steps):
-      action, _ = policy.act(state)
+      action, _ = policy(state)
       new_state, reward, done, info, *_ = env.step(action)
       total_rewards_ep += reward
         
@@ -66,7 +65,7 @@ def evaluate_agent(env, max_steps, n_eval_episodes, policy, *, reset_info=False)
 
   return mean_reward, std_reward
 
-def record_video(env, policy, out_directory, fps=30, max_frames=1000, *, reset_info=False):
+def record_video(env, policy, out_directory, fps=30, max_frames=1000, *, reset_info=False, render_mode='rgb_array'):
     """
     Generate a replay video of the agent
     :param env
@@ -80,16 +79,22 @@ def record_video(env, policy, out_directory, fps=30, max_frames=1000, *, reset_i
         state, *_ = env.reset()
     else:
         state = env.reset()
-    img = env.render(mode='rgb_array')
+    if render_mode is None:
+      img = env.render()
+    else:
+      img = env.render(mode=render_mode)
     images.append(img)
     for _ in tqdm(range(max_frames)):
         if done:
             break
 
         # Take the action (index) that have the maximum expected future reward given that state
-        action, _ = policy.act(state)
+        action, _ = policy(state)
         state, reward, done, *_ = env.step(action) # We directly put next_state = state for recording logic
-        img = env.render(mode='rgb_array')
+        if render_mode is None:
+          img = env.render()
+        else:
+          img = env.render(mode=render_mode)
         images.append(img)
 
     imageio.mimsave(out_directory, [np.array(img) for i, img in enumerate(images)], fps=fps)
@@ -101,7 +106,9 @@ def push_to_hub(repo_id,
                 eval_env,
                 video_fps=30,
                 *,
+                save_model=True,
                 reset_info=False,
+                render_mode='rgb_array',
                 ):
     """
     Evaluate, Generate a video and Upload a model to Hugging Face Hub.
@@ -131,7 +138,8 @@ def push_to_hub(repo_id,
       local_directory = Path(tmpdirname)
   
       # Step 2: Save the model
-      torch.save(model, local_directory / "model.pt")
+      if save_model:
+        torch.save(model, local_directory / "model.pt")
   
       # Step 3: Save the hyperparameters to JSON
       with open(local_directory / "hyperparameters.json", "w") as outfile:
@@ -208,7 +216,7 @@ def push_to_hub(repo_id,
   
       # Step 6: Record a video
       video_path =  local_directory / "replay.mp4"
-      record_video(eval_env, model, video_path, video_fps, reset_info=reset_info)
+      record_video(eval_env, model, video_path, video_fps, reset_info=reset_info, render_mode=render_mode)
   
       # Step 7. Push everything to the Hub
       api.upload_folder(
