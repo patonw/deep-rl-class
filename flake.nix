@@ -64,20 +64,39 @@
         ];
 
         libraries = with pkgs; [
+          boost
+          ffmpeg
+          fluidsynth
+          game-music-emu
+          glib
+          gtk2
+          libGL
+          libjpeg
+          libstdcxx5
+          lua51Packages.lua
+          nasm
+          openal
+          SDL2
+          stdenv.cc.cc.lib
+          timidity
+          wildmidi
+          zlib
         ];
 
         packages = with pkgs; [
           (python310.withPackages pylibs)
           cmake
           curl
+          gnutar
           jq
           stgit
           swig
+          unzip
         ];
       in
       {
         devShell = pkgs.mkShell {
-          buildInputs = packages;
+          buildInputs = packages ++ libraries;
           packages = with pkgs; [
             setup-script
           ];
